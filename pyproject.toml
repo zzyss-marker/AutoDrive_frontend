@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "py-project-template"
+name = "AutoDrive_frontend"
 version = "0.1.0"
 description = ""
 authors = ["Atticuszz <1831768457@qq.com>"]
 readme = "README.md"
-packages = [{include = "app", from = "src"}]
+packages = [{include = "src", from = "."}]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
