@@ -7,4 +7,7 @@
     <orderEntry type="jdk" jdkName="Poetry (AutoDrive_frontend) (2)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
+  <component name="SonarLintModuleSettings">
+    <option name="uniqueId" value="3f7b116d-7ba7-4567-8851-991bd003fd11" />
+  </component>
 </module>
