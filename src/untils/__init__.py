@@ -1,13 +1,12 @@
-
-
 import cv2
+
 
 def print_available_cameras():
     """
     尝试打开不同的摄像头索引来检查哪些摄像头是可用的，并打印出这些索引。
     """
     index = 0
-    while index< 10:
+    while index < 10:
         # 尝试通过当前索引创建VideoCapture对象
         cap = cv2.VideoCapture(index)
         if not cap.isOpened():
@@ -22,5 +21,3 @@ def print_available_cameras():
         print("No available cameras found.")
     else:
         print(f"Total available cameras: {index}")
-
-
