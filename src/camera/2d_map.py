@@ -73,8 +73,7 @@ class Camera:
     def get_frame(self) -> RGBDFrame:
         ret, rgb_frame = self.capture.read()
         if not ret:
-            print("未能抓取到帧")
-            return None
+            raise ValueError("got None RGBDFrame")
         depth_frame = self.get_depth_frame()
         return RGBDFrame(rgb_frame, depth_frame)
 
