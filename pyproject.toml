@@ -19,7 +19,7 @@ open3d = "^0.18.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
-pre-commit = "^3.6.2"
+pre-commit = "^3.7.0"
 pytest-cov = "^4.1.0"
 
 [tool.poetry.scripts]
