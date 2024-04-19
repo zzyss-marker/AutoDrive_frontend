@@ -2,5 +2,25 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/tests/scene_datasets/habitat-test-scenes" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/tests/versioned_data/habitat_test_scenes" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/Gaussian-SLAM" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/Replica-Dataset" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/Replica-Dataset/3rdparty/Pangolin" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/Replica-Dataset/3rdparty/Pangolin/external/pybind11" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/Replica-Dataset/3rdparty/Pangolin/external/pybind11/tools/clang" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/Replica-Dataset/3rdparty/eigen" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/SplaTAM" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/SplaTAM/diff-gaussian-rasterization-w-depth.git" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/chamferdist" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/gaussian-splatting" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/gaussian-splatting/SIBR_viewers" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/gaussian-splatting/submodules/diff-gaussian-rasterization" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/gaussian-splatting/submodules/diff-gaussian-rasterization/third_party/glm" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/gaussian-splatting/submodules/simple-knn" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/gradslam" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/habitat-sim" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/nerf-navigation" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../AutoDrive_backend/thirdparty/nice-slam" vcs="Git" />
   </component>
 </project>

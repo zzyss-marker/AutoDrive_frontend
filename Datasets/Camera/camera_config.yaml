@@ -1,7 +1,7 @@
 
-camera_params:
+camera:
   fx: 525.0
   fy: 525.0
   cx: 319.5
   cy: 239.5
-  png_depth_scale: 1000.0
+  scale: 1000.0

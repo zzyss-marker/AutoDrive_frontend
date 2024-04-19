@@ -4,7 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from RGBD_image import Camera, RGBDImage
+from slam_data import Camera, RGBDImage, Replica
 
 
 class PoseEstimator:
@@ -74,18 +74,25 @@ class Mapper:
 
 class Slam2D:
 
-    def __init__(self, cfg_file: str) -> None:
-        self.camera = Camera(cfg_file)
-        self.tracker = PoseEstimator(self.camera.K)
+    def __init__(self, input_folder, cfg_file: str,use_camera:bool=False) -> None:
+        if use_camera:
+            self.slam_data = Camera(input_folder,cfg_file)
+        else:
+            self.slam_data = Replica(input_folder,cfg_file)
+        self.use_camera = use_camera
+        self.tracker = PoseEstimator(self.slam_data.K)
         self.mapper = Mapper()
 
     def run(self) -> None:
         """
         tracking and mapping
         """
-        for rgb_d in self.camera:
+        for i,rgb_d in enumerate(self.slam_data):
             rgb_d: RGBDImage
-            pose = self.tracking(rgb_d.rgb)
+            if self.use_camera:
+                pose = self.tracking(rgb_d.rgb)
+            else:
+                pose = rgb_d.pose
             if pose:
                 pcd_w = rgb_d.camera_to_world(pose)
                 self.mapping(pcd_w)

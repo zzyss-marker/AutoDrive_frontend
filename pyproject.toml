@@ -11,6 +11,13 @@ python = ">=3.10,<3.13"
 numpy = "^1.26.4"
 opencv-contrib-python-headless = "^4.9.0.80"
 matplotlib = "^3.8.4"
+natsort = "^8.4.0"
+open3d = "^0.18.0"
+scikit-learn = "^1.4.2"
+addict = "^2.4.0"
+pandas = "^2.2.2"
+tqdm = "^4.66.2"
+mpld3 = "^0.5.10"
 
 
 
