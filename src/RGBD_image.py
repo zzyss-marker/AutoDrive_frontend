@@ -1,3 +1,6 @@
+import logging
+from typing import Generator
+
 import cv2
 import numpy as np
 
@@ -70,7 +73,7 @@ class Camera:
         self.depth_stream.start()
         self.capture = cv2.VideoCapture(2)
 
-    def __iter__(self) -> RGBDImage:
+    def __iter__(self) -> Generator[RGBDImage,None,None]:
         """
         get RGBDImage via camera
         :return: RGBDImage
