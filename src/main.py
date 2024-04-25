@@ -42,5 +42,5 @@ setup_logging()
 if __name__ == "__main__":
     input_folder = "Datasets/Camera/Replica/room0"
     config_file = "Datasets/Camera/camera_config.yaml"
-    slam = Slam2D(input_folder,config_file)
+    slam = Slam2D(input_folder, config_file)
     slam.run()

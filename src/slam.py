@@ -4,7 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from slam_data import Camera, RGBDImage, Replica
+from slam_data import Camera, Replica, RGBDImage
 
 
 class PoseEstimator:
@@ -35,10 +35,12 @@ class PoseEstimator:
         if len(matches) < 8:
             return None  # 如果匹配点太少，则返回None
 
-        src_pts = np.float32([self.reference_kp[m.queryIdx].pt for m in matches]).reshape(-1,2)
-        dst_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1,2)
+        src_pts = np.float32(
+            [self.reference_kp[m.queryIdx].pt for m in matches]
+        ).reshape(-1, 2)
+        dst_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1, 2)
 
-#归一化
+        # 归一化
         def normalize_points(pts):
             mean = np.mean(pts, axis=0)
             std = np.std(pts)
@@ -55,17 +57,17 @@ class PoseEstimator:
         transform_matrix = np.eye(4)
         transform_matrix[:3, :3] = R
         transform_matrix[:3, 3] = t.ravel()
-        scale = np.eye(3)*src_std
-        scale[2,2]=1
-        T=np.eye(4)
-        T[:3, :3]=scale
-        T[:3, 3]=src_mean
+        scale = np.eye(3) * src_std
+        scale[2, 2] = 1
+        T = np.eye(4)
+        T[:3, :3] = scale
+        T[:3, 3] = src_mean
         transform_matrix = np.linalg.inv(T) @ transform_matrix @ T
         return transform_matrix
 
 
 class Mapper:
-    def __init__(self, map_size=(200,200), resolution=0.05):
+    def __init__(self, map_size=(200, 200), resolution=0.05):
         self.map_size = map_size
         self.resolution = resolution
         self.map_2d = np.zeros(map_size)
@@ -87,11 +89,11 @@ class Mapper:
 
 class Slam2D:
 
-    def __init__(self, input_folder, cfg_file: str,use_camera:bool=False) -> None:
+    def __init__(self, input_folder, cfg_file: str, use_camera: bool = False) -> None:
         if use_camera:
-            self.slam_data = Camera(input_folder,cfg_file)
+            self.slam_data = Camera(input_folder, cfg_file)
         else:
-            self.slam_data = Replica(input_folder,cfg_file)
+            self.slam_data = Replica(input_folder, cfg_file)
         self.use_camera = use_camera
         self.tracker = PoseEstimator(self.slam_data.K)
         self.mapper = Mapper()
@@ -105,13 +107,13 @@ class Slam2D:
         """
         self.fig, self.ax = plt.subplots(figsize=(8, 6))
         self.im = self.ax.imshow(
-            np.zeros(self.mapper.map_size).T,  
+            np.zeros(self.mapper.map_size).T,
             origin="lower",
             cmap="gray",
-            interpolation="nearest"
+            interpolation="nearest",
         )
-        plt.show(block=False)  
-        for i,rgb_d in enumerate(self.slam_data):
+        plt.show(block=False)
+        for i, rgb_d in enumerate(self.slam_data):
             rgb_d: RGBDImage
             if self.use_camera:
                 pose = self.tracking(rgb_d.rgb)

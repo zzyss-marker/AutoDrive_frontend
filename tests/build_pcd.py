@@ -1,13 +1,22 @@
 from datetime import datetime
 from pathlib import Path
+
 import numpy as np
 import open3d as o3d
 from matplotlib import pyplot as plt
 
-from slam_data import Replica, RGBDImage
+from slam_data import Replica
+
 
 class PointCloudProcessor:
-    def __init__(self, dataset_path, config_path, output_folder, max_images=None, voxel_size=0.015):
+    def __init__(
+        self,
+        dataset_path,
+        config_path,
+        output_folder,
+        max_images=None,
+        voxel_size=0.015,
+    ):
         self.data_loader = Replica(dataset_path, config_path)
         self.output_folder = Path(output_folder)
         self.output_folder.mkdir(exist_ok=True)
@@ -32,7 +41,7 @@ class PointCloudProcessor:
                 depth_o3d,
                 depth_scale=1.0,
                 depth_trunc=1000.0,
-                convert_rgb_to_intensity=False
+                convert_rgb_to_intensity=False,
             )
 
             # 从 RGBD 图像创建点云
@@ -44,8 +53,8 @@ class PointCloudProcessor:
                     rgbd_image.K[0, 0],
                     rgbd_image.K[1, 1],
                     rgbd_image.K[0, 2],
-                    rgbd_image.K[1, 2]
-                )
+                    rgbd_image.K[1, 2],
+                ),
             )
 
             if rgbd_image.pose is not None:
@@ -55,7 +64,7 @@ class PointCloudProcessor:
             aggregated_pcd += pcd
 
             # 更新二维占用网格图
-            if i%20 ==0:
+            if i % 20 == 0:
                 self.update_occupancy_grid(aggregated_pcd, (-0.2, 0.2), 0.05)
 
         plt.ioff()  # 关闭交互模式
@@ -78,7 +87,7 @@ class PointCloudProcessor:
             grid[int(y), int(x)] = 1  # 标记为占用
 
         plt.clf()  # 清除当前图形
-        plt.imshow(grid, cmap='gray')
+        plt.imshow(grid, cmap="gray")
         plt.gca().invert_yaxis()
         plt.draw()
         plt.pause(0.001)  # 暂停一下以更新绘图
@@ -120,18 +129,22 @@ class PointCloudProcessor:
             grid[int(y), int(x)] = 1  # Mark the cell as occupied
 
         # Save the grid as an image
-        plt.imshow(grid, cmap='gray')
+        plt.imshow(grid, cmap="gray")
         plt.gca().invert_yaxis()
-        plt.savefig(self.output_folder / f"occupancy_grid_{datetime.now().strftime('%Y%m%d-%H%M%S')}.png")
+        plt.savefig(
+            self.output_folder
+            / f"occupancy_grid_{datetime.now().strftime('%Y%m%d-%H%M%S')}.png"
+        )
         print("Occupancy grid saved.")
+
 
 if __name__ == "__main__":
     processor = PointCloudProcessor(
-        dataset_path='/home/atticuszz/DevSpace/python/AutoDrive_frontend/Datasets/Replica/room0',
-        config_path='/home/atticuszz/DevSpace/python/AutoDrive_frontend/Datasets/Replica/cam_params.json',
-        output_folder='/home/atticuszz/DevSpace/python/AutoDrive_frontend/Datasets/Replica/Output',
+        dataset_path="/home/atticuszz/DevSpace/python/AutoDrive_frontend/Datasets/Replica/room0",
+        config_path="/home/atticuszz/DevSpace/python/AutoDrive_frontend/Datasets/Replica/cam_params.json",
+        output_folder="/home/atticuszz/DevSpace/python/AutoDrive_frontend/Datasets/Replica/Output",
         max_images=500,
-        voxel_size=0.015
+        voxel_size=0.015,
     )
     pcd = processor.process_pcd(False)
     # # 创建和保存二维占用网格图
@@ -145,4 +158,3 @@ if __name__ == "__main__":
     # # 假设已有 aggregated_pcd 可用，可以通过成员访问或者其他方式获取
     # # 以下只是调用示例，实际使用时需要确保 aggregated_pcd 是可用的
     # processor.create_occupancy_grid(pcd, height_range, grid_size)
-
