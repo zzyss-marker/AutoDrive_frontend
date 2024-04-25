@@ -35,10 +35,17 @@ class PoseEstimator:
         if len(matches) < 8:
             return None  # 如果匹配点太少，则返回None
 
-        src_pts = np.float32(
-            [self.reference_kp[m.queryIdx].pt for m in matches]
-        ).reshape(-1, 1, 2)
-        dst_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+        src_pts = np.float32([self.reference_kp[m.queryIdx].pt for m in matches]).reshape(-1,2)
+        dst_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1,2)
+
+#归一化
+        def normalize_points(pts):
+            mean = np.mean(pts, axis=0)
+            std = np.std(pts)
+            return (pts - mean) / std, mean, std
+
+        src_pts_norm, src_mean, src_std = normalize_points(src_pts)
+        dst_pts_norm, dst_mean, dst_std = normalize_points(dst_pts)
 
         E, mask = cv2.findEssentialMat(dst_pts, src_pts, self.K, cv2.RANSAC, 0.999, 1.0)
         if E is None:
@@ -48,11 +55,17 @@ class PoseEstimator:
         transform_matrix = np.eye(4)
         transform_matrix[:3, :3] = R
         transform_matrix[:3, 3] = t.ravel()
+        scale = np.eye(3)*src_std
+        scale[2,2]=1
+        T=np.eye(4)
+        T[:3, :3]=scale
+        T[:3, 3]=src_mean
+        transform_matrix = np.linalg.inv(T) @ transform_matrix @ T
         return transform_matrix
 
 
 class Mapper:
-    def __init__(self, map_size=(200, 200), resolution=0.1):
+    def __init__(self, map_size=(200,200), resolution=0.05):
         self.map_size = map_size
         self.resolution = resolution
         self.map_2d = np.zeros(map_size)
@@ -82,18 +95,29 @@ class Slam2D:
         self.use_camera = use_camera
         self.tracker = PoseEstimator(self.slam_data.K)
         self.mapper = Mapper()
+        self.fig = None
+        self.ax = None
+        self.im = None
 
     def run(self) -> None:
         """
         tracking and mapping
         """
+        self.fig, self.ax = plt.subplots(figsize=(8, 6))
+        self.im = self.ax.imshow(
+            np.zeros(self.mapper.map_size).T,  
+            origin="lower",
+            cmap="gray",
+            interpolation="nearest"
+        )
+        plt.show(block=False)  
         for i,rgb_d in enumerate(self.slam_data):
             rgb_d: RGBDImage
             if self.use_camera:
                 pose = self.tracking(rgb_d.rgb)
             else:
                 pose = rgb_d.pose
-            if pose:
+            if pose is not None and not np.allclose(pose, 0):
                 pcd_w = rgb_d.camera_to_world(pose)
                 self.mapping(pcd_w)
             self.show()
