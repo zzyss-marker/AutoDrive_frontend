@@ -1,4 +1,5 @@
 import logging
+from collections import deque
 
 import cv2
 import matplotlib.pyplot as plt
@@ -20,6 +21,9 @@ class PoseEstimator:
         self.reference_img = None
 
     def add_frame(self, img: np.ndarray) -> np.ndarray:
+        """Add a new frame and compute the pose transformation matrix.
+        :return transform_matrix: c2w
+        """
         kp, des = self.orb.detectAndCompute(img, None)
         if self.first_frame:
             # 初始化参考帧的处理
@@ -74,34 +78,60 @@ class PoseEstimator:
 
 
 class Mapper:
-    def __init__(self, map_size=(500, 500), resolution=200, downsample_resolution=0.25):
+    def __init__(self, map_size=(500, 500), resolution=200, show_binary=True):
         self.map_size = map_size
         self.resolution = resolution
-        self.downsample_resolution = downsample_resolution
-        self.map_2d = np.zeros(map_size)
         self.origin_x = self.map_size[0] // 2
         self.origin_y = self.map_size[1] // 2
 
-    def build_map_2d(self, pcd: np.ndarray) -> None:
-        # 在构建地图之前对点云进行下采样
-        if self.downsample_resolution < 1.0:
-            selected_indices = np.random.choice(
-                len(pcd),
-                size=int(len(pcd) * self.downsample_resolution),
-                replace=False,
-            )
-            pcd = pcd[selected_indices]
+        self.heat_map = np.zeros(map_size)
+        self.binary_map = np.zeros(map_size)
+        self.show_binary = show_binary
+        self.occupancy_threshold = 5  # 设置阈值，根据实际情况调整
 
-        for point in pcd:
-            x, y, z = point
-            if z > 0:
-                x_idx = int(x / self.resolution + self.origin_x)
-                y_idx = int(y / self.resolution + self.origin_y)
-                if 0 <= x_idx < self.map_size[0] and 0 <= y_idx < self.map_size[1]:
-                    self.map_2d[x_idx, y_idx] += 1
-                    logging.info(f"Added point to map at ({x_idx}, {y_idx}).")
-                else:
-                    logging.info(f"Point ({x_idx}, {y_idx}) out of map bounds.")
+    def build_map_2d(self, pcd: np.ndarray) -> None:
+        """
+        Build a 2D map from the given point cloud data.
+        :param pcd: Nx3 numpy array of 3D points in world coordinates
+        """
+        self._build_heat_map(pcd)
+        self._build_binary_map()
+
+    def _build_heat_map(self, pcd: np.ndarray) -> None:
+
+        # 转换坐标系到地图的索引
+        x_indices = (pcd[:, 0] / self.resolution + self.origin_x).astype(int)
+        y_indices = (pcd[:, 1] / self.resolution + self.origin_y).astype(int)
+
+        # 过滤掉超出地图范围的点
+        valid_indices = (
+            (x_indices >= 0)
+            & (x_indices < self.map_size[0])
+            & (y_indices >= 0)
+            & (y_indices < self.map_size[1])
+        )
+        x_indices = x_indices[valid_indices]
+        y_indices = y_indices[valid_indices]
+
+        # 用累加方式更新地图
+        np.add.at(self.heat_map, (x_indices, y_indices), 1)
+
+    def _build_binary_map(self) -> None:
+        self.binary_map = np.where(self.heat_map > self.occupancy_threshold, 1, 0)
+
+    def show(self) -> None:
+        """展示地图，可选展示二值图或热力图。"""
+        map_to_show = self.binary_map if self.show_binary else self.heat_map
+        plt.imshow(
+            map_to_show.T,
+            origin="lower",
+            cmap="gray" if self.show_binary else "hot",
+            interpolation="nearest",
+        )
+        plt.colorbar()
+        plt.draw()
+        plt.pause(0.001)
+        plt.clf()
 
 
 class Slam2D:
@@ -114,32 +144,27 @@ class Slam2D:
         self.use_camera = use_camera
         self.tracker = PoseEstimator(self.slam_data.K)
         self.mapper = Mapper()
-        self.fig = None
-        self.ax = None
-        self.im = None
+        # fps
+        self.stamps = deque(maxlen=100)
 
     def run(self) -> None:
         """
         tracking and mapping
         """
-        self.fig, self.ax = plt.subplots(figsize=(8, 6))
-        self.im = self.ax.imshow(
-            np.zeros(self.mapper.map_size).T,
-            origin="lower",
-            cmap="gray",
-            interpolation="nearest",
-        )
-        plt.show(block=False)
+
         for i, rgb_d in enumerate(self.slam_data):
             rgb_d: RGBDImage
-            if self.use_camera:
-                pose = self.tracking(rgb_d.rgb)
-            else:
-                pose = rgb_d.pose
+            start = cv2.getTickCount()
+            pose = self.tracking(rgb_d.rgb) if self.use_camera else rgb_d.pose
             if pose is not None and not np.allclose(pose, 0):
-                pcd_w = rgb_d.camera_to_world(pose)
+                pcd_w = rgb_d.camera_to_world(pose, downsample_resolution=0.001)
                 self.mapping(pcd_w)
-            self.show()
+            end = cv2.getTickCount()
+            self.stamps.append((end - start) / cv2.getTickFrequency())
+            if i % 50 == 0:
+                logging.info(f"Average FPS: {1 / np.mean(self.stamps)}")
+                self.mapper.show()
+        self.mapper.show()
 
     def tracking(self, rgb_image: np.ndarray) -> np.ndarray | None:
         """
@@ -157,15 +182,3 @@ class Slam2D:
         :param pcd: point cloud in world coordinate
         """
         self.mapper.build_map_2d(pcd)
-
-    def show(self) -> None:
-        """
-        show the 2D map
-        """
-        plt.imshow(
-            self.mapper.map_2d.T, origin="lower", cmap="hot", interpolation="nearest"
-        )
-        plt.colorbar()
-        plt.draw()
-        plt.pause(0.001)
-        plt.clf()

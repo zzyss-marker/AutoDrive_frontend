@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Black">
+    <option name="cmdArguments" value="-l 88" />
+    <option name="enabledOnReformat" value="true" />
+    <option name="enabledOnSave" value="true" />
+    <option name="executionMode" value="BINARY" />
+    <option name="pathToExecutable" value="$USER_HOME$/miniconda3/bin/black" />
     <option name="sdkName" value="Poetry (AutoDrive_frontend)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Poetry (AutoDrive_frontend)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Poetry (AutoDrive_frontend) (2)" project-jdk-type="Python SDK" />
 </project>

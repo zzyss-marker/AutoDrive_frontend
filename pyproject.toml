@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "src", from = "."}]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.13"
+python = ">=3.10,<3.11.0 || >3.11.0"
 numpy = "^1.26.4"
 opencv-contrib-python-headless = "^4.9.0.80"
 matplotlib = "^3.8.4"
@@ -27,6 +27,8 @@ mpld3 = "^0.5.10"
 pytest = "^8.0.0"
 pre-commit = "^3.7.0"
 pytest-cov = "^4.1.0"
+scalene = "^1.5.40"
+pyqt6 = "^6.7.0"
 
 [tool.poetry.scripts]
 tests = 'poetry_scripts:run_tests'

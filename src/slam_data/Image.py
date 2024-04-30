@@ -20,7 +20,9 @@ class RGBDImage:
         self.scale = depth_scale
         self.pose = pose
 
-    def camera_to_world(self, c2w: np.ndarray) -> np.ndarray:
+    def camera_to_world(
+        self, c2w: np.ndarray, downsample_resolution: float = 0.25
+    ) -> np.ndarray:
         """
         Transform points from camera coordinates to world coordinates using the c2w matrix.
         :param c2w: 4x4 transformation matrix from camera to world coordinates
@@ -37,7 +39,14 @@ class RGBDImage:
 
         # Remove the homogeneous coordinate before returning
         points_world = points_world_homogeneous[:, :3]
-        return points_world
+
+        # Downsample the points
+        selected_indices = np.random.choice(
+            len(points_world),
+            size=int(len(points_world) * downsample_resolution),
+            replace=False,
+        )
+        return points_world[selected_indices]
 
     def _depth_to_pointcloud(self) -> np.ndarray:
         """

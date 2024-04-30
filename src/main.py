@@ -40,7 +40,11 @@ def setup_logging(level: int = logging.INFO) -> None:
 setup_logging()
 
 if __name__ == "__main__":
-    input_folder = "/home/pixiu/Documents/stu_inno/fork pr/AutoDrive_frontend/Datasets/Replica/room0"
-    config_file = "/home/pixiu/Documents/stu_inno/fork pr/AutoDrive_frontend/Datasets/Camera/camera_config.yaml"
-    slam = Slam2D(input_folder, config_file)
+    # slam = Slam2D(
+    #     "/home/atticuszz/DevSpace/python/AutoDrive_frontend/src/camera/camera_config.yaml"
+    # )
+    slam = Slam2D(
+        "/home/atticuszz/DevSpace/python/AutoDrive_frontend/Datasets/Replica/room0",
+        "/home/atticuszz/DevSpace/python/AutoDrive_frontend/Datasets/Replica/cam_params.json",
+    )
     slam.run()

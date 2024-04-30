@@ -5,10 +5,11 @@ import numpy as np
 import yaml
 
 
-def as_intrinsics_matrix(intrinsics: list[float]):
+def as_intrinsics_matrix(intrinsics: list[float]) -> np.ndarray:
     """
     Get matrix representation of intrinsics.
-    intrinsics : [fx,fy,cx,cy]
+    :param intrinsics : [fx,fy,cx,cy]
+    :return: K matrix.shape=(3,3)
     """
     K = np.eye(3)
     K[0, 0] = intrinsics[0]
