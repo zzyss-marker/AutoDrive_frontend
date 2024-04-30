@@ -25,10 +25,10 @@ def load_camera_cfg(cfg_path: str) -> dict:
     cfg_path = Path(cfg_path)
     assert cfg_path.exists(), f"File not found: {cfg_path}"
     with open(cfg_path) as file:
-        if cfg_path.suffix in [".yaml,.yml"]:
+        if cfg_path.suffix in [".yaml", ".yml"]:
             cfg = yaml.safe_load(file)
         elif cfg_path.suffix == ".json":
             cfg = json.load(file)
         else:
-            raise TypeError(f"Failed to load cfg via:{cfg_path}")
+            raise TypeError(f"Failed to load cfg via:{cfg_path.suffix}")
     return cfg

@@ -4,7 +4,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-from slam_data import Camera, RGBDImage, Replica
+from slam_data import Camera, Replica, RGBDImage
 
 
 class PoseEstimator:
@@ -20,25 +20,41 @@ class PoseEstimator:
         self.reference_img = None
 
     def add_frame(self, img: np.ndarray) -> np.ndarray:
-        """Add a new frame and compute the pose transformation matrix.
-        :return transform_matrix: c2w
-        """
         kp, des = self.orb.detectAndCompute(img, None)
         if self.first_frame:
+            # 初始化参考帧的处理
             self.reference_kp = kp
             self.reference_des = des
             self.reference_img = img
             self.first_frame = False
-            return np.eye(4)  # 第一帧时返回单位矩阵
+            return np.eye(4)
+
         matches = self.matcher.match(self.reference_des, des)
         matches = sorted(matches, key=lambda x: x.distance)
-        if len(matches) < 8:
-            return None  # 如果匹配点太少，则返回None
 
+        logging.info(f"Found {len(matches)} matches.")
+
+        if len(matches) < 8:
+            logging.warning("Not enough matches to find a reliable pose.")
+            return None
+
+        # 匹配点处理和Essential Matrix的计算...
+        if E is None:
+            logging.error("Failed to compute a valid Essential Matrix.")
+            return None
         src_pts = np.float32(
             [self.reference_kp[m.queryIdx].pt for m in matches]
-        ).reshape(-1, 1, 2)
-        dst_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
+        ).reshape(-1, 2)
+        dst_pts = np.float32([kp[m.trainIdx].pt for m in matches]).reshape(-1, 2)
+
+        # 归一化
+        def normalize_points(pts):
+            mean = np.mean(pts, axis=0)
+            std = np.std(pts)
+            return (pts - mean) / std, mean, std
+
+        src_pts_norm, src_mean, src_std = normalize_points(src_pts)
+        dst_pts_norm, dst_mean, dst_std = normalize_points(dst_pts)
 
         E, mask = cv2.findEssentialMat(dst_pts, src_pts, self.K, cv2.RANSAC, 0.999, 1.0)
         if E is None:
@@ -48,21 +64,34 @@ class PoseEstimator:
         transform_matrix = np.eye(4)
         transform_matrix[:3, :3] = R
         transform_matrix[:3, 3] = t.ravel()
+        scale = np.eye(3) * src_std
+        scale[2, 2] = 1
+        T = np.eye(4)
+        T[:3, :3] = scale
+        T[:3, 3] = src_mean
+        transform_matrix = np.linalg.inv(T) @ transform_matrix @ T
         return transform_matrix
 
 
 class Mapper:
-    def __init__(self, map_size=(200, 200), resolution=0.1):
+    def __init__(self, map_size=(500, 500), resolution=200, downsample_resolution=0.25):
         self.map_size = map_size
         self.resolution = resolution
+        self.downsample_resolution = downsample_resolution
         self.map_2d = np.zeros(map_size)
         self.origin_x = self.map_size[0] // 2
         self.origin_y = self.map_size[1] // 2
 
     def build_map_2d(self, pcd: np.ndarray) -> None:
-        """
-        :param pcd: (n,x,y,z) in wc
-        """
+        # 在构建地图之前对点云进行下采样
+        if self.downsample_resolution < 1.0:
+            selected_indices = np.random.choice(
+                len(pcd),
+                size=int(len(pcd) * self.downsample_resolution),
+                replace=False,
+            )
+            pcd = pcd[selected_indices]
+
         for point in pcd:
             x, y, z = point
             if z > 0:
@@ -70,30 +99,44 @@ class Mapper:
                 y_idx = int(y / self.resolution + self.origin_y)
                 if 0 <= x_idx < self.map_size[0] and 0 <= y_idx < self.map_size[1]:
                     self.map_2d[x_idx, y_idx] += 1
+                    logging.info(f"Added point to map at ({x_idx}, {y_idx}).")
+                else:
+                    logging.info(f"Point ({x_idx}, {y_idx}) out of map bounds.")
 
 
 class Slam2D:
 
-    def __init__(self, input_folder, cfg_file: str,use_camera:bool=False) -> None:
+    def __init__(self, input_folder, cfg_file: str, use_camera: bool = False) -> None:
         if use_camera:
-            self.slam_data = Camera(input_folder,cfg_file)
+            self.slam_data = Camera(input_folder, cfg_file)
         else:
-            self.slam_data = Replica(input_folder,cfg_file)
+            self.slam_data = Replica(input_folder, cfg_file)
         self.use_camera = use_camera
         self.tracker = PoseEstimator(self.slam_data.K)
         self.mapper = Mapper()
+        self.fig = None
+        self.ax = None
+        self.im = None
 
     def run(self) -> None:
         """
         tracking and mapping
         """
-        for i,rgb_d in enumerate(self.slam_data):
+        self.fig, self.ax = plt.subplots(figsize=(8, 6))
+        self.im = self.ax.imshow(
+            np.zeros(self.mapper.map_size).T,
+            origin="lower",
+            cmap="gray",
+            interpolation="nearest",
+        )
+        plt.show(block=False)
+        for i, rgb_d in enumerate(self.slam_data):
             rgb_d: RGBDImage
             if self.use_camera:
                 pose = self.tracking(rgb_d.rgb)
             else:
                 pose = rgb_d.pose
-            if pose:
+            if pose is not None and not np.allclose(pose, 0):
                 pcd_w = rgb_d.camera_to_world(pose)
                 self.mapping(pcd_w)
             self.show()

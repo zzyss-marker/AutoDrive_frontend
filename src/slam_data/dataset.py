@@ -1,15 +1,12 @@
-from collections.abc import Generator
 from pathlib import Path
 
 import cv2
 import numpy as np
 from natsort import natsorted
 
-from .Image import RGBDImage
 from utils import as_intrinsics_matrix, load_camera_cfg
 
-
-
+from .Image import RGBDImage
 
 
 class DataLoaderBase:
@@ -22,7 +19,6 @@ class DataLoaderBase:
             [self.cfg["fx"], self.cfg["fy"], self.cfg["cx"], self.cfg["cy"]]
         )
         self.cur = 0
-
 
     def __len__(self):
         """get dataset num"""
@@ -126,6 +122,3 @@ class Replica(DataLoaderBase):
                 f"Number of color and depth images do not match in {self.input_folder}."
             )
         return color_paths, depth_paths
-
-
-
