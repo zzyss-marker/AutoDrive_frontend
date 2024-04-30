@@ -28,12 +28,12 @@ class PoseEstimator:
             self.reference_img = img
             self.first_frame = False
             return np.eye(4)
-        
+
         matches = self.matcher.match(self.reference_des, des)
         matches = sorted(matches, key=lambda x: x.distance)
-        
+
         logging.info(f"Found {len(matches)} matches.")
-        
+
         if len(matches) < 8:
             logging.warning("Not enough matches to find a reliable pose.")
             return None
