@@ -43,8 +43,7 @@ if __name__ == "__main__":
     # slam = Slam2D(
     #     "/home/atticuszz/DevSpace/python/AutoDrive_frontend/src/camera/camera_config.yaml"
     # )
-    slam = Slam2D(
-        "/home/atticuszz/DevSpace/python/AutoDrive_frontend/Datasets/Replica/room0",
-        "/home/atticuszz/DevSpace/python/AutoDrive_frontend/Datasets/Replica/cam_params.json",
-    )
+    input_dir = Path(__file__).parents[1] / "Datasets/Replica/room0"
+    config_file = Path(__file__).parents[1] / "Datasets/Replica/cam_params.json"
+    slam = Slam2D(input_dir.as_posix(), config_file.as_posix())
     slam.run()
