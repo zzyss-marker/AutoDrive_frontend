@@ -78,7 +78,7 @@ class PoseEstimator:
 
 
 class Mapper:
-    def __init__(self, map_size=(500, 500), resolution=200, show_binary=True):
+    def __init__(self, map_size=(300, 250), resolution=0.05, show_binary=True):
         self.map_size = map_size
         self.resolution = resolution
         self.origin_x = self.map_size[0] // 2
@@ -87,7 +87,7 @@ class Mapper:
         self.heat_map = np.zeros(map_size)
         self.binary_map = np.zeros(map_size)
         self.show_binary = show_binary
-        self.occupancy_threshold = 5  # 设置阈值，根据实际情况调整
+        self.occupancy_threshold = 8000  # 设置阈值，根据实际情况调整
 
     def build_map_2d(self, pcd: np.ndarray) -> None:
         """
@@ -117,7 +117,7 @@ class Mapper:
         np.add.at(self.heat_map, (x_indices, y_indices), 1)
 
     def _build_binary_map(self) -> None:
-        self.binary_map = np.where(self.heat_map > self.occupancy_threshold, 1, 0)
+        self.binary_map = np.where(self.heat_map < self.occupancy_threshold, 1, 0)
 
     def show(self) -> None:
         """展示地图，可选展示二值图或热力图。"""
@@ -157,11 +157,11 @@ class Slam2D:
             start = cv2.getTickCount()
             pose = self.tracking(rgb_d.rgb) if self.use_camera else rgb_d.pose
             if pose is not None and not np.allclose(pose, 0):
-                pcd_w = rgb_d.camera_to_world(pose, downsample_resolution=0.001)
+                pcd_w = rgb_d.camera_to_world(pose, downsample_resolution=0.1)
                 self.mapping(pcd_w)
             end = cv2.getTickCount()
             self.stamps.append((end - start) / cv2.getTickFrequency())
-            if i % 50 == 0:
+            if i % 30 == 0:
                 logging.info(f"Average FPS: {1 / np.mean(self.stamps)}")
                 self.mapper.show()
         self.mapper.show()

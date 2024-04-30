@@ -85,7 +85,7 @@ class Replica(DataLoaderBase):
             )
         else:
             raise ValueError(f"Unsupported depth file format {depth_path.suffix}.")
-        return depth / self.scale
+        return depth
 
     def _get_rgb(self, index: int | None = None) -> np.ndarray:
         color_path = self.color_paths[index]
