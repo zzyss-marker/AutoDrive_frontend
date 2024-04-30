@@ -20,21 +20,28 @@ class PoseEstimator:
         self.reference_img = None
 
     def add_frame(self, img: np.ndarray) -> np.ndarray:
-        """Add a new frame and compute the pose transformation matrix.
-        :return transform_matrix: c2w
-        """
         kp, des = self.orb.detectAndCompute(img, None)
         if self.first_frame:
+            # 初始化参考帧的处理
             self.reference_kp = kp
             self.reference_des = des
             self.reference_img = img
             self.first_frame = False
-            return np.eye(4)  # 第一帧时返回单位矩阵
+            return np.eye(4)
+        
         matches = self.matcher.match(self.reference_des, des)
         matches = sorted(matches, key=lambda x: x.distance)
+        
+        logging.info(f"Found {len(matches)} matches.")
+        
         if len(matches) < 8:
-            return None  # 如果匹配点太少，则返回None
+            logging.warning("Not enough matches to find a reliable pose.")
+            return None
 
+        # 匹配点处理和Essential Matrix的计算...
+        if E is None:
+            logging.error("Failed to compute a valid Essential Matrix.")
+            return None
         src_pts = np.float32(
             [self.reference_kp[m.queryIdx].pt for m in matches]
         ).reshape(-1, 2)
@@ -67,17 +74,24 @@ class PoseEstimator:
 
 
 class Mapper:
-    def __init__(self, map_size=(200, 200), resolution=0.05):
+    def __init__(self, map_size=(500, 500), resolution=200, downsample_resolution=0.25):
         self.map_size = map_size
         self.resolution = resolution
+        self.downsample_resolution = downsample_resolution
         self.map_2d = np.zeros(map_size)
         self.origin_x = self.map_size[0] // 2
         self.origin_y = self.map_size[1] // 2
 
     def build_map_2d(self, pcd: np.ndarray) -> None:
-        """
-        :param pcd: (n,x,y,z) in wc
-        """
+        # 在构建地图之前对点云进行下采样
+        if self.downsample_resolution < 1.0:
+            selected_indices = np.random.choice(
+                len(pcd),
+                size=int(len(pcd) * self.downsample_resolution),
+                replace=False,
+            )
+            pcd = pcd[selected_indices]
+
         for point in pcd:
             x, y, z = point
             if z > 0:
@@ -85,6 +99,9 @@ class Mapper:
                 y_idx = int(y / self.resolution + self.origin_y)
                 if 0 <= x_idx < self.map_size[0] and 0 <= y_idx < self.map_size[1]:
                     self.map_2d[x_idx, y_idx] += 1
+                    logging.info(f"Added point to map at ({x_idx}, {y_idx}).")
+                else:
+                    logging.info(f"Point ({x_idx}, {y_idx}) out of map bounds.")
 
 
 class Slam2D:

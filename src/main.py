@@ -40,7 +40,7 @@ def setup_logging(level: int = logging.INFO) -> None:
 setup_logging()
 
 if __name__ == "__main__":
-    input_folder = "Datasets/Camera/Replica/room0"
-    config_file = "Datasets/Camera/camera_config.yaml"
+    input_folder = "/home/pixiu/Documents/stu_inno/fork pr/AutoDrive_frontend/Datasets/Replica/room0"
+    config_file = "/home/pixiu/Documents/stu_inno/fork pr/AutoDrive_frontend/Datasets/Camera/camera_config.yaml"
     slam = Slam2D(input_folder, config_file)
     slam.run()
