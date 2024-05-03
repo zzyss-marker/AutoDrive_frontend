@@ -3,6 +3,7 @@ from pathlib import Path
 
 import numpy as np
 import yaml
+from matplotlib import pyplot as plt
 
 
 def as_intrinsics_matrix(intrinsics: list[float]) -> np.ndarray:
@@ -33,3 +34,20 @@ def load_camera_cfg(cfg_path: str) -> dict:
         else:
             raise TypeError(f"Failed to load cfg via:{cfg_path.suffix}")
     return cfg
+
+
+def show_image(color, depth):
+    # Plot color image
+    plt.figure(figsize=(10, 5))
+    plt.subplot(1, 2, 1)
+    plt.imshow(color)
+    plt.title("Color Image")
+    plt.axis("off")
+
+    # Plot depth image
+    plt.subplot(1, 2, 2)
+    plt.imshow(depth, cmap="gray")
+    plt.title("Depth Image")
+    plt.axis("off")
+
+    plt.show()
