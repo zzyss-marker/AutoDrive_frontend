@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.typing import NDArray
 
 
 class RGBDImage:
@@ -8,7 +9,7 @@ class RGBDImage:
         depth: np.ndarray,
         K: np.ndarray,
         depth_scale: float,
-        pose: np.ndarray | None = None,
+        pose: NDArray[np.float64] | None = None,
     ):
         if rgb.shape[0] != depth.shape[0] or rgb.shape[1] != depth.shape[1]:
             raise ValueError(
@@ -20,17 +21,17 @@ class RGBDImage:
         self.width = rgb.shape[1]
         self.K = K
         self.scale = depth_scale
-        self.pose = pose
+        self.pose: NDArray[np.float64] | None = pose
 
     def camera_to_world(
-        self, c2w: np.ndarray, downsample_resolution: float = 0.8
+        self, c2w: np.ndarray, downsample_stride: int = 1
     ) -> np.ndarray:
         """
         Transform points from camera coordinates to world coordinates using the c2w matrix.
         :param c2w: 4x4 transformation matrix from camera to world coordinates
         :return: Nx3 numpy array of transformed 3D points in world coordinates
         """
-        points_camera = self._depth_to_pointcloud(downsample_resolution)
+        points_camera = self.depth_to_pointcloud(downsample_stride)
         points_homogeneous = np.hstack(
             (points_camera, np.ones((points_camera.shape[0], 1)))
         )
@@ -38,14 +39,12 @@ class RGBDImage:
         points_world = points_world_homogeneous[:, :3]
         return points_world
 
-    def _depth_to_pointcloud(self, downsample_resolution: float = 0.8) -> np.ndarray:
+    def depth_to_pointcloud(self, downsample_stride: int = 1) -> np.ndarray:
         """
         Convert the depth image to a 3D point cloud based on a downsample resolution.
-        :param downsample_resolution: Fraction of the total pixels to keep.
+        :param downsample_stride: Fraction of the total pixels to keep.
         :return: Nx3 numpy array of 3D points.
         """
-        # Calculate downsample stride
-        downsample_stride = max(1, int(np.sqrt(1 / downsample_resolution)))
         # print(downsample_stride)
         # Generate pixel indices
         i_indices, j_indices = np.indices(self.depth.shape)

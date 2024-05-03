@@ -1,8 +1,7 @@
 import logging
-
-import cv2
 from typing import Literal
 
+import cv2
 import numpy as np
 import small_gicp
 from numpy.typing import NDArray
